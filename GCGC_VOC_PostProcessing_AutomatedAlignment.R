@@ -44,15 +44,13 @@ sumcol = function(x){
   return(tmp)
 }
 
-#Change names if preferred 
-#rownames(FullMatchMatrix) = paste("VOC",seq(1,nrow(FullMatchMatrix)),sep="")
 
 #######################################################################################################################################
-#Pre-processing in ChromaTOF/Excel
+#Pre-processing in ChromaTOF
 
 #Step 1:
 #When exporting the aligned compound table from ChromaTOF stat compare, selected the "Count" column, right click and select 'sort'
-#Then highlight the compounds found in >50% of samples, export selected analytes, delete column superscripts (sample names)
+#Then highlight the compounds found in 4 or more samples (>66%), export selected analytes, delete column superscripts (sample names),
 
 #Step 2:
 #replace the column labels with the following:
@@ -76,24 +74,27 @@ sumcol = function(x){
 
 ###############################################   User Input   #################################################################
 
-#Copy directory where files are stored/located or place files in this location
-wd = 'C:/Users/p2admin/Documents/Biodome Data Analysis' 
+#Copy directory where files are stored/located
+#wd = 'F:/Biodome Alignment Algorithm'
+#wd = "C:/Users/jeshima/Desktop/Biodome Manuscript/Data/GCxGC/IsotopeLabeling"
+wd = "C:/Users/jeshima/Desktop/Biodome Manuscript/Data/GCxGC/IsotopeLabeling/AlignedFiles2"
 setwd(wd)
 
 #Samples in each experimental condition (Positive Control, Negative Control, Group 1, Group 2, etc.)
 #Depends on frequency of TDU change and VOC collection duration
-nsamples = 6
+nsamples = 4
 
 #How many experimental conditions did you run? (blanks/negative controls/positive controls are all separate experimental conditions)
 #Note: This algorithm cannot handle more than 5 experimental conditions currently
-numberofconditions = 3
+numberofconditions = 4
 
 #Duplicate Threshold: This values determines the threshold for removing duplicated compound names.
 #Note: some duplicate naming is unavoidable due to alignment parameters and the occurrence of "split peaks". A value of 8-10 is recommended to filter "only" the background contaminants
 maxdups = 10
 
-#Save the output? - This will overwrite the previous file. To save a new version, you will have to manually edit the last few lines of code.
+#Save the output?
 writefile = TRUE
+writewd = "C:/Users/jeshima/Desktop/Biodome Manuscript/Data/GCxGC/IsotopeLabeling/AlignedFiles2/Output"
 
 #Give your experimental conditions names (this cannot be left blank, give unique names for each condition)
 #IMPORTANT NOTE: EACH CONDITION NAME BELOW MUST BE THE FIRST SET OF CHARACTERS IN THE FILE NAME
@@ -101,9 +102,9 @@ writefile = TRUE
 #NAMING IS CASE SENSITIVE - SO BE EXTRA CAREFUL WHEN NAMING
 Condition1Name = "Heavy" #Experimental Condition
 Condition2Name = "Light" #Positive Control
-Condition3Name = "Blank" #Negative Control ("optional")
+Condition3Name = "Media" #Negative Control ("optional")
 Condition4Name = "Empty" #Negative Control 2 (optional)
-Condition5Name = "NONE" #Optional
+Condition5Name = "" #Optional
 
 ## RETENTION TIME TOLERANCE
 #User defined first dimension tolerance (in seconds) - typical values are 4-14 (smaller values = stronger restrictions & higher confidence in matching, but more likely to miss some appropriately aligned VOCs due to single outliers)
@@ -111,16 +112,16 @@ Condition5Name = "NONE" #Optional
 Dim1Tol = 10
 #User defined second dimension tolerance (in seconds) - typical values are 0.05-0.2
 #Starting value of 0.12 recommended
-Dim2Tol = 0.12
+Dim2Tol = 0.07
 #Select the reference condition for alignment (for heavy labeling, the heavy condition is recommended as the reference)
-ref = "Light" #USE NON ISOTOPICALLY LABELED CONDITION FOR REFERENCE
+ref = "Light"
 
   
 #Note to user: Condition 1 is established as the reference level. Therefore, when interpreting SumRes (SummaryResults) rownames
 #are set based on the VOC names assigned to Condition 1. These names may or may not be accurate depending on the quality of naming.
 #Columns 2 and 3 show the index of the VOC, from the respective condition, that matched the VOC from Condition 1.
 
-#Note to user: Filtering out compounds present in <50-80% samples is recommended in an effort to focus on reproducible VOCs
+#Note to user: Filtering out compounds present in <50-80% samples is recommended in an effort to focus on high quality VOCs
 #Filtering is can be performed using one of the following options:
 #1) all files have VOCs removed that are missing in more than X% of samples (not recommended for negative controls, may remove compounds that are important)
 #2) only the files corresponding to the experimental condition(s) are filtered
@@ -135,11 +136,11 @@ option = 2
 #The greater the filtering threshold, the higher 'quality' the VOCs will be (i.e. present in more samples)
 #The lower the filtering threshold, the more unknown or poorly resolved VOCs will be included
 #A filterthresh value less than 0.5 is not recommended 
-FilteringThresh = 0.8 #strictly less than this value
+FilteringThresh = 0.6 #strictly less than this value
 
 ### PARAMETER FOR OPTION 2 ONLY - this can be left blank or not run at all if options 1 or 3 are selected
 #Type the names of your experimental conditions
-expconditions = c("Heavy","Light")
+expconditions = c("Light","Heavy")
 
 ############### For Option 4 (currently only supports two different filtering thresholds)
 FilteringThresh1 = 0.8
@@ -150,27 +151,26 @@ expconditions2 = c("Blank","Empty") #This is the second 'group'
 #Advanced Functionality: You can leave off experimental condition names, which will result in the condition not being filtered.
 
 
-##Variable Naming Scheme
+##Object Naming Scheme
 #...Clean... = Background contaminants removed, but no further filtering
 #...Final... = Background contaminants removed, and VOCs are filtered according to the option above
 #...Output... = Data frame ready for user viewing 
 
-#AlignInfo files will be in the same order as the ConditionNames specified above
-
-#Critical Note: 
-#This code currently only supports alignment of "high quality" VOCs - less beneficial to match poorly reproducible peaks.
-#High quality: VOC is observed in greater than or equal to 50% of samples
-
-#Note: This code has only been fully verified for option 2
-
-#Use following successful analysis:
-#HighQualityLightDimOne[110,]
-#HighQualityLightDimTwo[110,]
-#HighQualityHeavyDimOne[43,]
-#HighQualityHeavyDimTwo[43,]
-
 
 ### ONCE YOU HAVE SPECIFIED THE INPUT PARAMETERS ABOVE, HIT "SOURCE" ABOVE TO RUN THE ENTIRE SCRIPT
+
+#AlignInfo files will be in the same order as the ConditionNames specified above
+
+#Check Indices
+# X = 44; Y = 2
+# 
+# cat("Dim 1")
+# HighQualityLightDimOne[X,]
+# HighQualityHeavyDimOne[Y,]
+# 
+# cat("Dim 2")
+# HighQualityLightDimTwo[X,]
+# HighQualityHeavyDimTwo[Y,]
 
 ###############################################   READ IN DATA   #################################################################
 
@@ -1446,6 +1446,7 @@ for(i in 1:length(expconditions)){
   dataname = paste("LowQuality",conditions[e],"DimOne",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1460,11 +1461,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e], "DimTwo",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1479,11 +1482,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e],"Abundance",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1498,11 +1503,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e],"Count",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1517,6 +1524,7 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
 }
 
@@ -1527,6 +1535,7 @@ for(i in 1:length(expconditions)){
   dataname = paste("LowQuality",conditions[e],"DimOne",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1541,11 +1550,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e], "DimTwo",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1560,11 +1571,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e],"Abundance",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1579,11 +1592,13 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
   dataname = paste("LowQuality",conditions[e],"Count",sep="")
   tmp = get(dataname)
   removeindex = rep(NA,nrow(tmp))
+  if(nrow(tmp) != 0){
   for(j in 1:nrow(tmp)){
     current = tmp$VOC[j]
     b = nchar(current)
@@ -1598,6 +1613,7 @@ for(i in 1:length(expconditions)){
   if(length(removeindex)>0){
     tmp = tmp[-removeindex,]
     assign(dataname,tmp)
+  }
   }
   
 }
@@ -1609,8 +1625,10 @@ for(i in 1:length(expconditions)){
 ###############################################################################################################################
 
 #It is recommended to focus on 'High Quality' VOCs, unless you have a reason to look through the low quality ones
+#This code currently only supports alignment of high quality VOCs - 5-10-22
 
 #Allow for many matches between heavy and light - You still must manually pull up the mass spectrums and validate similarity
+#Unique Mass needs to be integrated into this code
 
 # CURRENTLY USES: DIM1, DIM2 - 5-10-22
 
@@ -1793,7 +1811,7 @@ if(numberofconditions == 3){
     cat("Sorry, this code does not currently support this analysis")
   }
   
-}else if(length(expconditions) == 4){
+}else if(numberofconditions == 4){
   if(option == 2){
     
     cat("Aligning conditions 3 and 4...")
@@ -1944,7 +1962,7 @@ if(numberofconditions == 3){
   }else{
     cat("Sorry, this code does not currently support this analysis")
   }
-}else if(length(expconditions) == 5){
+}else if(numberofconditions == 5){
   
   cat("Aligning conditions 3-5...")
   
@@ -2193,6 +2211,10 @@ if(length(expconditions) == 2){
 }
 
 if(writefile == T){
+  setwd(writewd)
   write.csv(FullMatchMatrix,"IsotopicallyLabeled_AlignmentMatrix.csv")
+  write.csv(HighQualityLightDimOne,"HighQuality_Light_Dim1.csv")
+  write.csv(HighQualityLightDimTwo,"HighQuality_Light_Dim2.csv")
+  write.csv(HighQualityHeavyDimOne,"HighQuality_Heavy_Dim1.csv")
+  write.csv(HighQualityHeavyDimTwo,"HighQuality_Heavy_Dim2.csv")
 }
-
