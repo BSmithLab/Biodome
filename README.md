@@ -6,4 +6,4 @@ Author: Jarrett Eshima
 
 PI: Dr. Barbara Smith
 
-Institute: Arizona State University, School of Biological and Health Systems Engineering
+Institute: School of Biological and Health Systems Engineering, Arizona State University
