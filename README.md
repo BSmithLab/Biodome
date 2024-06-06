@@ -1,4 +1,4 @@
-# C13 Alignment in the Biodome
+# Biodome Scipts
 
 Scripts used for the statistical analysis of SK-OV-3 and E. coli volatilomes in the Biodome are also provided.
 
